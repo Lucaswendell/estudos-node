@@ -1,5 +1,5 @@
 # Anotações
 ### Rodar o node
-```javascript
-node arquivo.js
+```bash
+$ node arquivo.js
 ```
