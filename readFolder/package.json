@@ -1,0 +1,14 @@
+{
+  "name": "read",
+  "version": "1.0.0",
+  "description": "Projeto para organizar as pastas por data",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Lucas Wendel",
+  "license": "ISC",
+  "dependencies": {
+    "moment": "^2.29.4"
+  }
+}
