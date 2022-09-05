@@ -10,7 +10,7 @@ fs.readdirSync("../").forEach((file) => {
   const isFileIgnore = /(^|\/)\.[^\/\.]/g.test(file);
   const fileStat = fs.statSync(`../${file}`);
 
-  if (isFileIgnore || fileStat.isFile()) return;
+  if (isFileIgnore || fileStat.isFile() || file === "readFolder") return;
 
   const fileReplace = file.replace(/(\d){0,}\_/g, " ");
   txtFile += `# ${fileReplace.toUpperCase()} | ${fomartDate(
@@ -37,4 +37,4 @@ fs.readdirSync("../").forEach((file) => {
   });
 });
 
-fs.writeFileSync("../paths.md", txtFile);
+fs.writeFileSync("../modulos.md", txtFile);
