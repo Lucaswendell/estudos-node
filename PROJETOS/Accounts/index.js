@@ -5,13 +5,12 @@ let usuarioLogado = "";
 
 operation();
 
-function operation({ isUsuarioLogado = false, usuario = "" } = {}) {
+function operation() {
   const choices = [];
-  if (isUsuarioLogado) {
-    usuarioLogado = usuario;
+  if (usuarioLogado) {
     choices.push("Consultar Saldo", "Depositar", "Sacar", "Sair");
   } else {
-    choices.push("Criar conta", "Entrar na conta", "Sair");
+    choices.push("Criar conta", "Entrar", "Sair");
   }
 
   inquirer
@@ -27,8 +26,9 @@ function operation({ isUsuarioLogado = false, usuario = "" } = {}) {
       const action = answer["action"];
       const actions = {
         "Criar conta": crateAccount,
+        Entrar: signIn,
         "Consultar Saldo": "",
-        Depositar: "",
+        Depositar: deposit,
         Sacar: "",
         Sair: sair,
       };
@@ -76,24 +76,93 @@ function buildAccount() {
 
       fs.writeFileSync(
         `accounts/${accountName}.json`,
-        '{"balance": 0}',
+        '{"balance": 0, "statement": []}',
         function (err) {
           console.log(err);
         }
       );
       console.log(chalk.green("Parabéns, sua conta foi criada!"));
-      operation({ isUsuarioLogado: true, usuario: accountName });
+      usuarioLogado = accountName;
+      operation();
+    })
+    .catch((err) => console.log(err));
+}
+
+// sign in account
+
+function signIn() {
+  inquirer
+    .prompt([
+      {
+        name: "account",
+        message: "Digite o nome da sua conta: ",
+      },
+    ])
+    .then((answer) => {
+      const { account } = answer;
+
+      if (fs.existsSync(`accounts/${account}.json`)) {
+        usuarioLogado = account;
+        operation();
+      } else {
+        console.log(chalk.bgRed.black("Conta não encontrada!"));
+        signIn();
+        return;
+      }
     })
     .catch((err) => console.log(err));
 }
 
 //add an amount to user account
 
-// function deposit(){
-//     inquirer.prompt([
-//         {
-//             name: 'amount',
-//             message: ''
-//         }
-//     ])
-// }
+function deposit() {
+  inquirer
+    .prompt([
+      {
+        name: "amount",
+        type: "number",
+        message: "Qual valor deseja depositar?",
+      },
+    ])
+    .then((answer) => {
+      const { amount } = answer;
+
+      if (isNaN(amount)) {
+        console.log(chalk.bgRed.black("Valor inválido."));
+        deposit();
+        return;
+      }
+
+      if (amount < 0) {
+        console.log(
+          chalk.bgRed.black("Valor digitado deve ser maior que zero.")
+        );
+        deposit();
+        return;
+      }
+
+      if (fs.existsSync(`accounts/${usuarioLogado}.json`)) {
+        const account = JSON.parse(
+          fs.readFileSync(`accounts/${usuarioLogado}.json`)
+        );
+
+        const statement = JSON.stringify([...account.statement, `+${amount}`]);
+
+        fs.writeFileSync(
+          `accounts/${usuarioLogado}.json`,
+          `{"balance": ${account.balance + amount}, "statement": ${statement}}`,
+          function (err) {
+            console.log(err);
+          }
+        );
+
+        console.log(chalk.green("O valor foi depositado na conta!"));
+        operation();
+      } else {
+        console.log(chalk.bgRed.black("Conta não encontrada."));
+        operation();
+        return;
+      }
+    })
+    .catch((err) => console.log(err));
+}
