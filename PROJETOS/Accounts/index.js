@@ -1,13 +1,13 @@
 const inquirer = require("inquirer");
 const chalk = require("chalk");
 const fs = require("fs");
-let usuarioLogado = "";
+let accountSignIn = "";
 
 operation();
 
 function operation() {
   const choices = [];
-  if (usuarioLogado) {
+  if (accountSignIn) {
     choices.push("Consultar Saldo", "Depositar", "Sacar", "Sair");
   } else {
     choices.push("Criar conta", "Entrar", "Sair");
@@ -27,9 +27,9 @@ function operation() {
       const actions = {
         "Criar conta": crateAccount,
         Entrar: signIn,
-        "Consultar Saldo": "",
-        Depositar: deposit,
-        Sacar: "",
+        "Consultar Saldo": getAccountBalance,
+        Depositar: addAmount,
+        Sacar: withDraw,
         Sair: sair,
       };
 
@@ -70,8 +70,7 @@ function buildAccount() {
         console.log(
           chalk.bgRed.black("Esta conta já existe, escolha outra conta")
         );
-        buildAccount();
-        return;
+        return buildAccount();
       }
 
       fs.writeFileSync(
@@ -82,8 +81,8 @@ function buildAccount() {
         }
       );
       console.log(chalk.green("Parabéns, sua conta foi criada!"));
-      usuarioLogado = accountName;
-      operation();
+      accountSignIn = accountName;
+      return operation();
     })
     .catch((err) => console.log(err));
 }
@@ -102,12 +101,11 @@ function signIn() {
       const { account } = answer;
 
       if (fs.existsSync(`accounts/${account}.json`)) {
-        usuarioLogado = account;
-        operation();
+        accountSignIn = account;
+        return operation();
       } else {
         console.log(chalk.bgRed.black("Conta não encontrada!"));
-        signIn();
-        return;
+        return signIn();
       }
     })
     .catch((err) => console.log(err));
@@ -115,7 +113,7 @@ function signIn() {
 
 //add an amount to user account
 
-function deposit() {
+function addAmount() {
   inquirer
     .prompt([
       {
@@ -129,40 +127,113 @@ function deposit() {
 
       if (isNaN(amount)) {
         console.log(chalk.bgRed.black("Valor inválido."));
-        deposit();
-        return;
+        return addAmount();
       }
 
       if (amount < 0) {
         console.log(
           chalk.bgRed.black("Valor digitado deve ser maior que zero.")
         );
-        deposit();
-        return;
+        return addAmount();
       }
 
-      if (fs.existsSync(`accounts/${usuarioLogado}.json`)) {
-        const account = JSON.parse(
-          fs.readFileSync(`accounts/${usuarioLogado}.json`)
-        );
+      const account = getAccount();
+      const statement = [...account.statement, `+${amount}`];
 
-        const statement = JSON.stringify([...account.statement, `+${amount}`]);
+      account.balance = parseFloat(amount) + parseFloat(account.balance);
+      account.statement = statement;
 
-        fs.writeFileSync(
-          `accounts/${usuarioLogado}.json`,
-          `{"balance": ${account.balance + amount}, "statement": ${statement}}`,
-          function (err) {
-            console.log(err);
-          }
-        );
+      fs.writeFileSync(
+        `accounts/${accountSignIn}.json`,
+        JSON.stringify(account),
+        function (err) {
+          console.log(err);
+        }
+      );
 
-        console.log(chalk.green("O valor foi depositado na conta!"));
-        operation();
-      } else {
-        console.log(chalk.bgRed.black("Conta não encontrada."));
-        operation();
-        return;
-      }
+      console.log(chalk.green("O valor foi depositado na conta!"));
+      console.log(chalk.green(`Saldo atual: R$${account.balance}`));
+      return operation();
     })
     .catch((err) => console.log(err));
+}
+
+function getAccount() {
+  if (fs.existsSync(`accounts/${accountSignIn}.json`)) {
+    const accountJSON = fs.readFileSync(`accounts/${accountSignIn}.json`, {
+      encoding: "utf-8",
+      flag: "r",
+    });
+
+    return JSON.parse(accountJSON);
+  } else {
+    console.log(chalk.bgRed.black("Conta não encontrada."));
+    return operation();
+  }
+}
+
+//show account values
+function getAccountBalance() {
+  const account = getAccount();
+  console.log(
+    chalk.bgBlue.black(`Olá, o saldo da sua conta é de R$${account.balance}`)
+  );
+  console.log(chalk.white(`=== Entradas ===`));
+  const deposits = account.statement.filter((value) => /^\+/g.test(value));
+  console.log(chalk.green(deposits.join(" | ")));
+
+  console.log(chalk.white(`=== Saídas ===`));
+  const withDraw = account.statement.filter((value) => /^\-/g.test(value));
+  console.log(chalk.red(withDraw.join(" | ")));
+
+  return operation();
+}
+
+// withdraw an amount from user account
+function withDraw() {
+  inquirer
+    .prompt([{ name: "amount", message: "Quanto você desseja sacar?" }])
+    .then((answer) => {
+      const { amount } = answer;
+
+      if (isNaN(amount)) {
+        console.log(chalk.bgRed.black("Valor inválido."));
+        return withDraw();
+      }
+
+      if (amount < 0) {
+        console.log(
+          chalk.bgRed.black("Valor digitado deve ser maior que zero.")
+        );
+        return withDraw();
+      }
+
+      const account = getAccount();
+
+      if (amount > account.balance) {
+        console.log(
+          chalk.bgRed.black(
+            `Valor digitado deve ser menor ou igual a R$${account.balance}.`
+          )
+        );
+        return withDraw();
+      }
+
+      account.balance = parseFloat(account.balance) - parseFloat(amount);
+
+      account.statement = [...account.statement, `-${amount}`];
+
+      fs.writeFileSync(
+        `accounts/${accountSignIn}.json`,
+        JSON.stringify(account),
+        function (err) {
+          console.log(err);
+        }
+      );
+
+      console.log(chalk.green("O valor foi sacado da conta!"));
+      console.log(chalk.green(`Saldo atual: R$${account.balance}`));
+      return operation();
+    })
+    .catch((e) => console.log(e));
 }
