@@ -29,8 +29,13 @@ fs.readdirSync("../").forEach((file) => {
   });
 
   filesChildOrder.forEach((fileChild, index) => {
-    const fileReplaceChild = fileChild.replaceAll(/(\d){0,}\_/g, " ");
+    const isFileIgnoreChild = /(^|\/)\.[^\/\.]/g.test(file);
     const fileChildStat = fs.statSync(`../${file}/${fileChild}`);
+
+    if (isFileIgnoreChild || fileChildStat.isFile()) return;
+
+    const fileReplaceChild = fileChild.replaceAll(/(\d){0,}\_/g, " ");
+
     txtFile += `${index + 1}. ${fileReplaceChild.toLowerCase()} | ${fomartDate(
       fileChildStat.birthtime
     )}\n\r`;
