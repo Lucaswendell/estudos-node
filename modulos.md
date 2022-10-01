@@ -36,7 +36,13 @@
 #  NPM FUNDAMENTAL | 04/09/2022 22:23:59
 1.  criando projeto | 04/09/2022 22:24:18
 #  EXPRESS | 25/09/2022 20:56:31
-1.  instalacao | 25/09/2022 20:57:57
+3. node modules | 25/09/2022 21:03:41
+5. templates | 25/09/2022 21:10:10
+6. users | 25/09/2022 22:20:31
+7. public | 25/09/2022 22:37:49
+8. exercício | 25/09/2022 22:46:10
+#  TEMPLATE ENGINE | 01/10/2022 15:58:38
+1.  instalacao handlebars | 01/10/2022 16:14:25
 # PROJETOS | 04/09/2022 22:57:04
 1. accounts | 04/09/2022 22:57:23
 
