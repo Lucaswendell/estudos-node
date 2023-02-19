@@ -1,0 +1,11 @@
+{{#with this}}
+    <div class="card">
+        <h1>{{description}}</h1>
+        <p>Preço: {{price}}</p>
+        {{#if showProduct }}
+            <a href="/" >Voltar</a>
+        {{else}}
+            <a href="/product/{{id}}" >Ver produto</a>
+        {{/if}}
+    </div>
+{{/with}}
